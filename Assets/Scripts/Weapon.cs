@@ -1,27 +1,41 @@
 using System;
 using UnityEngine;
+using UnityEngine.Timeline;
 
 public class Weapon : MonoBehaviour
 {
+    [Header("Statystyki Broni")]
     [SerializeField]
-    private int projectileVelocity;
-    [SerializeField]
-    private GameObject FirePoint;
-    [SerializeField]
-    private GameObject Camera;
-    [SerializeField]
-    private KeyCode shoot = (KeyCode.Mouse0);
-    [SerializeField]
-    private KeyCode reload = (KeyCode.R);
-    [SerializeField]
-    private int ammunition;
-    [SerializeField]
-    private int magAmmunition;
-    [SerializeField]
-    private int maxMagAmmunition;
+    private float damage;
 
-    public static Action<int, int> AmmoUpdate;
-    public static Action Hit;
+    private float damageTaken;
+    private float distance;
+
+    [Header("Amunicja")]
+    [SerializeField]
+    private int currentAmmo;
+    [SerializeField]
+    private int maxAmmoInMag;
+    [SerializeField]
+    private int reserveAmmo;
+
+    [Header("Komponenty")]
+    [SerializeField]
+    private Transform firePoint;
+    [SerializeField]
+    private Camera playerCamera;
+    [SerializeField]
+    private PlayerWeaponManager player;
+    [SerializeField]
+    private EnemyAI enemy;
+
+    [Header("Ustawienia")]
+    public bool isPlayerWeapon = true;
+
+
+    public Action<int, int> AmmoUpdate;
+    public Action<int> ShootEvent;
+    public Action Hit;
 
     LayerMask enemyLayerMask;
 
@@ -29,7 +43,7 @@ public class Weapon : MonoBehaviour
 
     void Awake()
     {
-        enemyLayerMask = LayerMask.GetMask("Enemy");
+        enemyLayerMask = LayerMask.GetMask("Enemy", "Wall", "Player");
 
         line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
@@ -38,59 +52,107 @@ public class Weapon : MonoBehaviour
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.startColor = Color.yellow;
         line.endColor = Color.yellow;
+        line.enabled = false;
     }
 
     private void Start()
     {
-        ammunition = 150;
-        maxMagAmmunition = 16;
-        magAmmunition = maxMagAmmunition;
-    }
-    void Update()
-    {
-        if (Input.GetKeyDown(shoot)) Shoot();
-        if (Input.GetKeyDown(reload)) Reload();
+        currentAmmo = maxAmmoInMag;
+
+        if (isPlayerWeapon)
+        {
+            player.ShootHandler += Shoot;
+            player.ReloadHandler += Reload;
+            AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
+        }
+        else
+        {
+            enemy.ShootHandler += Shoot;
+            enemy.ReloadHandler += Reload;
+        }
     }
 
     void Shoot()
     {
-        if(magAmmunition > 0)
+        ShootEvent?.Invoke(currentAmmo);
+        if (currentAmmo <= 0)
         {
-            RaycastHit hit;
-            Ray ray = new Ray(transform.position, transform.forward);
-
-            // Oddanie strza³u w Enemy Layer
-            if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, enemyLayerMask))
-            { 
-                // Linia w Game View
-                line.SetPosition(0, ray.origin);
-                line.SetPosition(1, hit.point);
-
-                Hit?.Invoke();
-            }
-           
-            ammunition--;
-            magAmmunition--;
-            AmmoUpdate?.Invoke(magAmmunition, maxMagAmmunition);
+            return;
         }
+        currentAmmo--;
+
+        RaycastHit hit;
+        Ray ray = new Ray(transform.position, transform.forward);
+
+        // Oddanie strza³u w Enemy Layer
+        if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, enemyLayerMask))
+        {
+                
+            // Linia w Game View
+            line.SetPosition(0, ray.origin);
+            line.SetPosition(1, hit.point);
+
+            // Obliczanie obra¿enia
+            distance = hit.distance;
+            if(distance <= 5)
+            {
+                damageTaken = damage;
+            } else if(distance > 5 && distance <=15)
+            {
+                damageTaken = damage - distance * 0.5f;
+            } else if(distance > 15)
+            {
+                if(damage * 1.4f - distance <= 0)
+                {
+                    damageTaken = 1;
+                }
+                else
+                {
+                    damageTaken = damage * 1.4f - distance;
+                }   
+            }
+            Debug.Log("Odleg³oœæ: " + distance + " Obra¿enia: " + (int)damageTaken);
+
+
+            if (hit.collider.CompareTag("Enemy"))
+            {
+                hit.collider.gameObject.GetComponent<EnemyManager>().Hit((int)damageTaken);
+            } 
+            Hit?.Invoke();
+        }
+        if (reserveAmmo == 0)
+        {
+            AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
+        } else
+        {
+            AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
+        }
+            
         
     }
 
     void Reload()
     {
-        if (ammunition - maxMagAmmunition < maxMagAmmunition + magAmmunition)
-        {
-            ammunition = ammunition - (maxMagAmmunition - magAmmunition);
-            magAmmunition = ammunition;
-            maxMagAmmunition = ammunition;
-        } else {
-            ammunition = ammunition - (maxMagAmmunition - magAmmunition);
-            magAmmunition = maxMagAmmunition;   
-        }
-        
-        
-        AmmoUpdate?.Invoke(magAmmunition, maxMagAmmunition);
-        
+    // Jeœli magazynek pe³ny lub brak rezerwy -> nie prze³adowujemy
+    if (currentAmmo == maxAmmoInMag || reserveAmmo <= 0) return;
+
+    // Obliczamy ile brakuje do pe³na
+    int bulletsNeeded = maxAmmoInMag - currentAmmo;
+
+    // Sprawdzamy czy mamy tyle w rezerwie
+    if (reserveAmmo >= bulletsNeeded)
+    {
+        reserveAmmo -= bulletsNeeded;
+        currentAmmo += bulletsNeeded;
+        AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
+    }
+    else
+    {
+        // £adujemy resztkê z rezerwy
+        currentAmmo += reserveAmmo;
+        reserveAmmo = 0;
+        AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
+    }
     }
 
 }

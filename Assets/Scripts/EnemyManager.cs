@@ -8,13 +8,17 @@ public class EnemyManager : MonoBehaviour
     private int health;
     private void Start()
     {
-        health = 10;
-        Weapon.Hit += Hit;
+        health = 100;
     }
 
-    private void Hit()
+    public void Hit(int damageTaken)
     {
-        if (health > 1) health--;
+        if (health > 1) {
+            health -= damageTaken;
+            if (health < 1) {
+                Destroy(gameObject);
+            }
+        }
         else Destroy(gameObject);
     }
 

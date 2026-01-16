@@ -8,11 +8,13 @@ public class HUDManager : MonoBehaviour
     private Text AmmunitionText;
     [SerializeField]
     private Text HitMarker;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    [SerializeField] 
+    private Weapon playerWeapon;
+
     void Start()
     {
-        Weapon.AmmoUpdate += AmmoUpdate;
-        Weapon.Hit += Hit;
+        playerWeapon.AmmoUpdate += AmmoUpdate;
+        playerWeapon.Hit += Hit;
 
         HitMarker.gameObject.SetActive(false);
     }
