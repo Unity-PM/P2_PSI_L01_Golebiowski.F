@@ -37,13 +37,14 @@ public class Weapon : MonoBehaviour
     public Action<int> ShootEvent;
     public Action Hit;
 
-    LayerMask enemyLayerMask;
+    LayerMask enemyLayerMask, otherLayerMask;
 
     private LineRenderer line;
 
     void Awake()
     {
-        enemyLayerMask = LayerMask.GetMask("Enemy", "Wall", "Player");
+        enemyLayerMask = LayerMask.GetMask("Enemy", "Player");
+        otherLayerMask = LayerMask.GetMask("Wall");
 
         line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
@@ -85,7 +86,10 @@ public class Weapon : MonoBehaviour
         Ray ray = new Ray(transform.position, transform.forward);
 
         // Oddanie strza³u w Enemy Layer
-        if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, enemyLayerMask))
+        if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask)){
+
+        }
+        else if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, enemyLayerMask))
         {
                 
             // Linia w Game View
@@ -114,10 +118,8 @@ public class Weapon : MonoBehaviour
             Debug.Log("Odleg³oœæ: " + distance + " Obra¿enia: " + (int)damageTaken);
 
 
-            if (hit.collider.CompareTag("Enemy"))
-            {
-                hit.collider.gameObject.GetComponent<EnemyManager>().Hit((int)damageTaken);
-            } 
+
+            hit.collider.gameObject.GetComponent<EnemyManager>().Hit((int)damageTaken);
             Hit?.Invoke();
         }
         if (reserveAmmo == 0)

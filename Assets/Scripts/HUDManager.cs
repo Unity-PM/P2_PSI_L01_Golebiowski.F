@@ -5,9 +5,11 @@ using UnityEngine.UI;
 public class HUDManager : MonoBehaviour
 {
     [SerializeField]
-    private Text AmmunitionText;
+    private Text AmmunitionText1;
     [SerializeField]
-    private Text HitMarker;
+    private Text AmmunitionText2;
+    [SerializeField]
+    private GameObject HitMarker;
     [SerializeField] 
     private Weapon playerWeapon;
 
@@ -22,7 +24,8 @@ public class HUDManager : MonoBehaviour
     private void AmmoUpdate(int Ammunition, int maxAmmunition)
     {
 
-        AmmunitionText.text = Ammunition + " / " + maxAmmunition;
+        AmmunitionText1.text = "" + Ammunition;
+        AmmunitionText2.text = "" + maxAmmunition;
     }
     private void Hit()
     {

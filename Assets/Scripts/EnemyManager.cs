@@ -6,9 +6,11 @@ public class EnemyManager : MonoBehaviour
 
     [SerializeField]
     private int health;
+    [SerializeField]
+    private Weapon Weapon;
     private void Start()
     {
-        health = 100;
+        health = 200;
     }
 
     public void Hit(int damageTaken)
