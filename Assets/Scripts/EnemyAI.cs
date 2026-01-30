@@ -7,7 +7,11 @@ public class EnemyAI : MonoBehaviour
 {
 
     [SerializeField]
-    private Transform player;
+    private Transform playerHitBox;
+    [SerializeField]
+    private Weapon Weapon;
+    [SerializeField]
+    private Camera Camera;
     [SerializeField]
     private float rotationSpeed = 5f;
     [SerializeField]
@@ -19,19 +23,36 @@ public class EnemyAI : MonoBehaviour
     public Action ShootHandler;
     public Action ReloadHandler;
 
+    LayerMask otherLayerMask;
     LayerMask playerLayerMask;
 
     private void Awake()
     {
-        playerLayerMask = LayerMask.GetMask("Player", "Wall");
+        otherLayerMask = LayerMask.GetMask("Wall");
+        playerLayerMask = LayerMask.GetMask("Player");
+
     }
 
     private void FixedUpdate()
     {
-        RaycastHit hit;
-        Ray ray = new Ray(transform.position, transform.forward);
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, playerLayerMask))
+        Shoot();
+        if(Weapon.getAmmo < 1)
         {
+
+        }
+    }
+
+    private void Shoot()
+    {
+        RaycastHit hit;
+        Ray ray = new Ray(Camera.transform.position, transform.forward);
+        if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask))
+        {
+
+        }
+        else if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, playerLayerMask))
+        {
+
             if (hit.collider.CompareTag("Player"))
             {
                 if (Time.time < nextFireTime) return;
@@ -41,10 +62,15 @@ public class EnemyAI : MonoBehaviour
 
         }
 
-        Vector3 direction = player.position - transform.position;
+        Vector3 direction = playerHitBox.position - transform.position;
+
+        Vector3 cameraDirection = playerHitBox.position - Camera.transform.position;
 
         Quaternion lookRotation = Quaternion.LookRotation(direction);
 
+        Quaternion cameraLookRotation = Quaternion.LookRotation(cameraDirection);
+
         transform.rotation = Quaternion.Slerp(transform.rotation, lookRotation, Time.deltaTime * rotationSpeed);
+        Camera.transform.rotation = Quaternion.Slerp(Camera.transform.rotation, cameraLookRotation, Time.deltaTime * rotationSpeed);
     }
 }

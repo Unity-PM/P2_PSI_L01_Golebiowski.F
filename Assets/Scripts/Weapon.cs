@@ -23,7 +23,7 @@ public class Weapon : MonoBehaviour
     [SerializeField]
     private Transform firePoint;
     [SerializeField]
-    private Camera playerCamera;
+    private Camera Camera;
     [SerializeField]
     private PlayerWeaponManager player;
     [SerializeField]
@@ -37,13 +37,13 @@ public class Weapon : MonoBehaviour
     public Action<int> ShootEvent;
     public Action Hit;
 
-    LayerMask enemyLayerMask, otherLayerMask;
+    LayerMask entityLayerMask, otherLayerMask;
 
     private LineRenderer line;
 
     void Awake()
     {
-        enemyLayerMask = LayerMask.GetMask("Enemy", "Player");
+        entityLayerMask = LayerMask.GetMask("Enemy", "Player");
         otherLayerMask = LayerMask.GetMask("Wall");
 
         line = gameObject.AddComponent<LineRenderer>();
@@ -53,7 +53,7 @@ public class Weapon : MonoBehaviour
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.startColor = Color.yellow;
         line.endColor = Color.yellow;
-        line.enabled = false;
+        line.enabled = true;
     }
 
     private void Start()
@@ -75,23 +75,23 @@ public class Weapon : MonoBehaviour
 
     void Shoot()
     {
-        ShootEvent?.Invoke(currentAmmo);
         if (currentAmmo <= 0)
         {
             return;
         }
         currentAmmo--;
 
+
         RaycastHit hit;
-        Ray ray = new Ray(transform.position, transform.forward);
+        Ray ray = new Ray(Camera.transform.position, Camera.transform.forward);
 
-        // Oddanie strza³u w Enemy Layer
-        if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask)){
-
+        // Oddanie strza³u w Layer z obiektami nie¿ywimi, albo ¿ywymi
+        if (Physics.Raycast(Camera.transform.position, Camera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask)){
+            ShootEvent?.Invoke(currentAmmo);
         }
-        else if (Physics.Raycast(playerCamera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, enemyLayerMask))
+        else if (Physics.Raycast(Camera.transform.position, Camera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, entityLayerMask))
         {
-                
+            ShootEvent?.Invoke(currentAmmo);
             // Linia w Game View
             line.SetPosition(0, ray.origin);
             line.SetPosition(1, hit.point);
@@ -118,14 +118,22 @@ public class Weapon : MonoBehaviour
             Debug.Log("Odleg³oœæ: " + distance + " Obra¿enia: " + (int)damageTaken);
 
 
+            if (hit.collider.gameObject.CompareTag("Enemy"))
+            {
+                hit.collider.gameObject.GetComponent<EnemyManager>().Hit((int)damageTaken);
+                Hit?.Invoke();
+            } else if (hit.collider.gameObject.CompareTag("Player")){
+                hit.collider.gameObject.GetComponent<PlayerManager>().Hit((int)damageTaken);
+                Hit?.Invoke();
+            }
+            
+        } else if(isPlayerWeapon) ShootEvent?.Invoke(currentAmmo);
 
-            hit.collider.gameObject.GetComponent<EnemyManager>().Hit((int)damageTaken);
-            Hit?.Invoke();
-        }
         if (reserveAmmo == 0)
         {
             AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
-        } else
+        }
+        else
         {
             AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
         }
@@ -155,6 +163,11 @@ public class Weapon : MonoBehaviour
         reserveAmmo = 0;
         AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
     }
+    }
+
+    public int getAmmo()
+    {
+        return currentAmmo;
     }
 
 }
