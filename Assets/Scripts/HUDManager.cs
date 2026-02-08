@@ -9,6 +9,10 @@ public class HUDManager : MonoBehaviour
     [SerializeField]
     private Text AmmunitionText2;
     [SerializeField]
+    private Text HealthText;
+    [SerializeField]
+    private Text RemainingEnemies;
+    [SerializeField]
     private GameObject HitMarker;
     [SerializeField] 
     private Weapon playerWeapon;
@@ -17,10 +21,17 @@ public class HUDManager : MonoBehaviour
     {
         playerWeapon.AmmoUpdate += AmmoUpdate;
         playerWeapon.Hit += Hit;
+        PlayerManager.UpdateHealth += UpdateHealthGUI;
+        GameManager.UpdateRemainingEnemies += UpdateRemainingEnemies;
 
         HitMarker.gameObject.SetActive(false);
     }
 
+
+    private void UpdateRemainingEnemies(int noEnemy)
+    {
+        RemainingEnemies.text = noEnemy.ToString();
+    }
     private void AmmoUpdate(int Ammunition, int maxAmmunition)
     {
 
@@ -31,6 +42,11 @@ public class HUDManager : MonoBehaviour
     {
         HitMarker.gameObject.SetActive(true);
         StartCoroutine(DisableHitMarker());
+    }
+
+    private void UpdateHealthGUI(int health)
+    {
+        HealthText.text = health.ToString();
     }
 
     IEnumerator DisableHitMarker()

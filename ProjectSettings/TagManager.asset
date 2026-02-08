@@ -7,6 +7,9 @@ TagManager:
   - Ground
   - PlayerWeapon
   - Enemy
+  - EndGameSound
+  - HUD
+  - PostProcessFX
   layers:
   - Default
   - TransparentFX
@@ -17,7 +20,7 @@ TagManager:
   - Enemy
   - Player
   - Wall
-  - 
+  - PostProcessing
   - 
   - 
   - 

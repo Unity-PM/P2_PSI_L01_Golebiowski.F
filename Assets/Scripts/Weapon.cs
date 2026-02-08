@@ -37,14 +37,13 @@ public class Weapon : MonoBehaviour
     public Action<int> ShootEvent;
     public Action Hit;
 
-    LayerMask entityLayerMask, otherLayerMask;
+    LayerMask LayerMask;
 
     private LineRenderer line;
 
     void Awake()
     {
-        entityLayerMask = LayerMask.GetMask("Enemy", "Player");
-        otherLayerMask = LayerMask.GetMask("Wall");
+        LayerMask = LayerMask.GetMask("Enemy", "Player", "Wall");
 
         line = gameObject.AddComponent<LineRenderer>();
         line.positionCount = 2;
@@ -53,7 +52,7 @@ public class Weapon : MonoBehaviour
         line.material = new Material(Shader.Find("Sprites/Default"));
         line.startColor = Color.yellow;
         line.endColor = Color.yellow;
-        line.enabled = true;
+        line.enabled = false;
     }
 
     private void Start()
@@ -75,6 +74,7 @@ public class Weapon : MonoBehaviour
 
     void Shoot()
     {
+        ShootEvent?.Invoke(currentAmmo);
         if (currentAmmo <= 0)
         {
             return;
@@ -85,13 +85,9 @@ public class Weapon : MonoBehaviour
         RaycastHit hit;
         Ray ray = new Ray(Camera.transform.position, Camera.transform.forward);
 
-        // Oddanie strza³u w Layer z obiektami nie¿ywimi, albo ¿ywymi
-        if (Physics.Raycast(Camera.transform.position, Camera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask)){
-            ShootEvent?.Invoke(currentAmmo);
-        }
-        else if (Physics.Raycast(Camera.transform.position, Camera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, entityLayerMask))
+
+        if (Physics.Raycast(Camera.transform.position, Camera.transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, LayerMask))
         {
-            ShootEvent?.Invoke(currentAmmo);
             // Linia w Game View
             line.SetPosition(0, ray.origin);
             line.SetPosition(1, hit.point);
@@ -143,28 +139,24 @@ public class Weapon : MonoBehaviour
 
     void Reload()
     {
-    // Jeœli magazynek pe³ny lub brak rezerwy -> nie prze³adowujemy
-    if (currentAmmo == maxAmmoInMag || reserveAmmo <= 0) return;
 
-    // Obliczamy ile brakuje do pe³na
-    int bulletsNeeded = maxAmmoInMag - currentAmmo;
+        if (currentAmmo == maxAmmoInMag || reserveAmmo <= 0) return;
 
-    // Sprawdzamy czy mamy tyle w rezerwie
-    if (reserveAmmo >= bulletsNeeded)
-    {
-        reserveAmmo -= bulletsNeeded;
-        currentAmmo += bulletsNeeded;
-        AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
-    }
-    else
-    {
-        // £adujemy resztkê z rezerwy
-        currentAmmo += reserveAmmo;
-        reserveAmmo = 0;
-        AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
-    }
-    }
+        int bulletsNeeded = maxAmmoInMag - currentAmmo;
 
+        if (reserveAmmo >= bulletsNeeded)
+        {
+            reserveAmmo -= bulletsNeeded;
+            currentAmmo += bulletsNeeded;
+            AmmoUpdate?.Invoke(currentAmmo, maxAmmoInMag);
+        }
+        else
+        {
+            currentAmmo += reserveAmmo;
+            reserveAmmo = 0;
+            AmmoUpdate?.Invoke(currentAmmo, currentAmmo);
+        }
+    }
     public int getAmmo()
     {
         return currentAmmo;

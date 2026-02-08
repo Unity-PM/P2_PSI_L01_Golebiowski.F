@@ -5,9 +5,21 @@ EditorBuildSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Scenes:
-  - enabled: 1
+  - enabled: 0
     path: Assets/Scenes/SampleScene.unity
     guid: 99c9720ab356a0642a771bea13969a05
+  - enabled: 0
+    path: Assets/LoafbrrAssets/BackroomsLikeAssetRe/scenes/LevelTst.unity
+    guid: a3f29f1950f6e5945a274cf7349d68b2
+  - enabled: 1
+    path: Assets/Scenes/Menu.unity
+    guid: 27e791f1eb56f544e9a552b8f8873588
+  - enabled: 1
+    path: Assets/Scenes/GameScene.unity
+    guid: 3672174e4a1dd6c40a7858f19ca09e1f
+  - enabled: 1
+    path: Assets/Scenes/EndScene.unity
+    guid: 4bf78d55af76edc4292035f8c7b40825
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}
   m_UseUCBPForAssetBundles: 0

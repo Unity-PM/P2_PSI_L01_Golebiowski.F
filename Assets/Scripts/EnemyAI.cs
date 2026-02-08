@@ -23,34 +23,29 @@ public class EnemyAI : MonoBehaviour
     public Action ShootHandler;
     public Action ReloadHandler;
 
-    LayerMask otherLayerMask;
-    LayerMask playerLayerMask;
+    LayerMask LayerMask;
 
     private void Awake()
     {
-        otherLayerMask = LayerMask.GetMask("Wall");
-        playerLayerMask = LayerMask.GetMask("Player");
+        LayerMask = LayerMask.GetMask("Player", "Wall");
 
     }
 
     private void FixedUpdate()
     {
         Shoot();
-        if(Weapon.getAmmo < 1)
-        {
+        //if(Weapon.getAmmo < 1)
+        //{
 
-        }
+        //}
     }
 
     private void Shoot()
     {
         RaycastHit hit;
         Ray ray = new Ray(Camera.transform.position, transform.forward);
-        if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, otherLayerMask))
-        {
 
-        }
-        else if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, playerLayerMask))
+        if (Physics.Raycast(Camera.transform.position, transform.TransformDirection(Vector3.forward), out hit, Mathf.Infinity, LayerMask))
         {
 
             if (hit.collider.CompareTag("Player"))
@@ -62,6 +57,7 @@ public class EnemyAI : MonoBehaviour
 
         }
 
+        // smooth obroty
         Vector3 direction = playerHitBox.position - transform.position;
 
         Vector3 cameraDirection = playerHitBox.position - Camera.transform.position;
